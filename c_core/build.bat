@@ -39,7 +39,7 @@ echo Building with MinGW...
 echo.
 
 gcc -Wall -Wextra -O2 -shared -o build\musicqueue.dll ^
-    doubly_linked_list.c max_heap.c stack.c queue.c hashmap.c manager.c ^
+    doubly_linked_list.c max_heap.c stack.c queue.c trie.c manager.c ^
     -Wl,--out-implib,build\libmusicqueue.a
 
 if %ERRORLEVEL% NEQ 0 (
@@ -60,7 +60,7 @@ echo Building with MSVC...
 echo.
 
 cl /LD /O2 /Fe:build\musicqueue.dll ^
-    doubly_linked_list.c max_heap.c stack.c queue.c hashmap.c manager.c
+    doubly_linked_list.c max_heap.c stack.c queue.c trie.c manager.c
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

@@ -6,9 +6,10 @@ interface PlaybackControlsProps {
     currentSong: Song | null;
     onSkipNext: () => void;
     onSkipPrev: () => void;
+    onSongPlay?: (songId: number) => void;
 }
 
-const PlaybackControls: React.FC<PlaybackControlsProps> = ({ currentSong, onSkipNext, onSkipPrev }) => {
+const PlaybackControls: React.FC<PlaybackControlsProps> = ({ currentSong, onSkipNext, onSkipPrev, onSongPlay }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -33,6 +34,40 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({ currentSong, onSkip
             setIsPlaying(false);
         }
     }, [currentSong?.id]);
+
+    // Track when audio actually starts playing
+    const lastPlayedSongRef = React.useRef<number | null>(null);
+    const playTrackedRef = React.useRef<boolean>(false);
+    
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio || !currentSong) return;
+
+        // Reset tracking when song changes
+        if (lastPlayedSongRef.current !== currentSong.id) {
+            lastPlayedSongRef.current = currentSong.id;
+            playTrackedRef.current = false;
+        }
+
+        const handlePlay = () => {
+            // Track play when audio starts (only once per song)
+            if (currentSong && onSongPlay && !playTrackedRef.current) {
+                // Only track if starting from near beginning (within first 2 seconds)
+                // This prevents counting resume after pause as a new play
+                if (audio.currentTime < 2) {
+                    playTrackedRef.current = true;
+                    console.log(`Tracking play for song ${currentSong.id}`);
+                    onSongPlay(currentSong.id);
+                }
+            }
+        };
+
+        audio.addEventListener('play', handlePlay);
+        
+        return () => {
+            audio.removeEventListener('play', handlePlay);
+        };
+    }, [currentSong?.id, onSongPlay]);
 
     // Handle initial volume
     useEffect(() => {
@@ -76,6 +111,12 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({ currentSong, onSkip
     };
 
     const handleEnded = () => {
+        // Track that song finished playing (ensure it's counted)
+        if (currentSong && onSongPlay) {
+            // Reset tracking so if song restarts, it can be tracked again
+            playTrackedRef.current = false;
+            onSongPlay(currentSong.id);
+        }
         onSkipNext();
     };
 

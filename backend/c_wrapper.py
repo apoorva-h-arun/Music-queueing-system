@@ -124,21 +124,16 @@ class Queue(Structure):
         ('size', c_int)
     ]
 
-class HashMapEntry(Structure):
+class SongIdNode(Structure):
     pass
 
-HashMapEntry._fields_ = [
+SongIdNode._fields_ = [
     ('song_id', c_int),
-    ('node_ptr', POINTER(DLLNode)),
-    ('next', POINTER(HashMapEntry))
+    ('next', POINTER(SongIdNode))
 ]
 
-class HashMap(Structure):
-    _fields_ = [
-        ('buckets', POINTER(POINTER(HashMapEntry))),
-        ('capacity', c_int),
-        ('size', c_int)
-    ]
+class TrieNode(Structure):
+    pass # Opaque
 
 class MusicQueueManager(Structure):
     _fields_ = [
@@ -147,7 +142,8 @@ class MusicQueueManager(Structure):
         ('undo_stack', POINTER(Stack)),
         ('redo_stack', POINTER(Stack)),
         ('upcoming', POINTER(Queue)),
-        ('song_map', POINTER(HashMap))
+        ('song_trie', POINTER(TrieNode)),
+        ('artist_trie', POINTER(TrieNode))
     ]
 
 # ============================================================================
@@ -156,10 +152,10 @@ class MusicQueueManager(Structure):
 
 if c_lib:
     # Manager functions
-    c_lib.manager_create.argtypes = [c_int, c_int]
+    c_lib.manager_create.argtypes = [c_int]
     c_lib.manager_create.restype = POINTER(MusicQueueManager)
     
-    c_lib.manager_add_song.argtypes = [POINTER(MusicQueueManager), c_int, c_float]
+    c_lib.manager_add_song.argtypes = [POINTER(MusicQueueManager), c_int, c_char_p, c_char_p, c_int, c_int]
     c_lib.manager_add_song.restype = c_bool
     
     c_lib.manager_remove_song.argtypes = [POINTER(MusicQueueManager), c_int]
@@ -177,7 +173,10 @@ if c_lib:
     c_lib.manager_move_down.argtypes = [POINTER(MusicQueueManager), c_int]
     c_lib.manager_move_down.restype = c_bool
     
-    c_lib.manager_update_priority.argtypes = [POINTER(MusicQueueManager), c_int, c_float]
+    c_lib.manager_rotate_queue.argtypes = [POINTER(MusicQueueManager), c_bool]
+    c_lib.manager_rotate_queue.restype = c_bool
+
+    c_lib.manager_update_priority.argtypes = [POINTER(MusicQueueManager), c_int, c_int, c_int]
     c_lib.manager_update_priority.restype = c_bool
     
     c_lib.manager_undo.argtypes = [POINTER(MusicQueueManager)]
@@ -192,6 +191,15 @@ if c_lib:
     c_lib.manager_destroy.argtypes = [POINTER(MusicQueueManager)]
     c_lib.manager_destroy.restype = None
 
+    c_lib.manager_search_songs.argtypes = [POINTER(MusicQueueManager), c_char_p]
+    c_lib.manager_search_songs.restype = POINTER(SongIdNode)
+
+    c_lib.manager_search_artists.argtypes = [POINTER(MusicQueueManager), c_char_p]
+    c_lib.manager_search_artists.restype = POINTER(SongIdNode)
+
+    c_lib.manager_get_recommendations.argtypes = [POINTER(MusicQueueManager), c_int]
+    c_lib.manager_get_recommendations.restype = POINTER(SongIdNode)
+
 # ============================================================================
 # PYTHON WRAPPER CLASS
 # ============================================================================
@@ -199,134 +207,114 @@ if c_lib:
 class MusicQueueWrapper:
     """
     Python wrapper for the C Music Queue Manager
-    Provides Pythonic interface to C functions with a Python fallback
+    Strictly uses C data structures, Python/JS fallback is forbidden.
     """
     
-    def __init__(self, heap_capacity: int = 1000, hashmap_capacity: int = 1000):
+    def __init__(self, heap_capacity: int = 1000):
         """Initialize the music queue manager"""
-        self.use_fallback = False
         if not c_lib:
-            print("⚠ C library not loaded. Using Python fallback implementation for queue management.")
-            self.use_fallback = True
-            self.queue = []
-            self.current_index = -1
-            return
+            raise RuntimeError("CRITICAL ERROR: C library not loaded. Python fallback is strictly forbidden.")
         
-        try:
-            self.manager = c_lib.manager_create(heap_capacity, hashmap_capacity)
-            if not self.manager:
-                raise RuntimeError("Failed to create manager")
-        except Exception as e:
-            print(f"⚠ Failed to initialize C manager: {e}. Using Python fallback.")
-            self.use_fallback = True
-            self.queue = []
-            self.current_index = -1
+        self.manager = c_lib.manager_create(heap_capacity)
+        if not self.manager:
+            raise RuntimeError("CRITICAL ERROR: Failed to create C manager.")
     
-    def add_song(self, song_id: int, priority: float = 0.0) -> bool:
-        """Add a song to the queue"""
-        if self.use_fallback:
-            if song_id not in self.queue:
-                self.queue.append(song_id)
-                if self.current_index == -1:
-                    self.current_index = 0
-            return True
-        return c_lib.manager_add_song(self.manager, song_id, priority)
+    def add_song(self, song_id: int, title: str, artist: str, likes: int = 0, play_count: int = 0) -> bool:
+        """Add a song to the queue using C logic"""
+        return c_lib.manager_add_song(self.manager, song_id, title.encode('utf-8'), artist.encode('utf-8'), likes, play_count)
     
     def remove_song(self, song_id: int) -> bool:
         """Remove a song from the queue"""
-        if self.use_fallback:
-            if song_id in self.queue:
-                idx = self.queue.index(song_id)
-                self.queue.remove(song_id)
-                if self.current_index >= len(self.queue):
-                    self.current_index = len(self.queue) - 1
-            return True
         return c_lib.manager_remove_song(self.manager, song_id)
     
     def skip_next(self) -> bool:
         """Skip to next song"""
-        if self.use_fallback:
-            if not self.queue: return False
-            self.current_index = (self.current_index + 1) % len(self.queue)
-            return True
         return c_lib.manager_skip_next(self.manager)
     
     def skip_prev(self) -> bool:
         """Skip to previous song"""
-        if self.use_fallback:
-            if not self.queue: return False
-            self.current_index = (self.current_index - 1 + len(self.queue)) % len(self.queue)
-            return True
         return c_lib.manager_skip_prev(self.manager)
     
     def move_up(self, song_id: int) -> bool:
         """Move song up in queue"""
-        if self.use_fallback:
-            if song_id in self.queue:
-                idx = self.queue.index(song_id)
-                if idx > 0:
-                    self.queue[idx], self.queue[idx-1] = self.queue[idx-1], self.queue[idx]
-            return True
         return c_lib.manager_move_up(self.manager, song_id)
     
     def move_down(self, song_id: int) -> bool:
         """Move song down in queue"""
-        if self.use_fallback:
-            if song_id in self.queue:
-                idx = self.queue.index(song_id)
-                if idx < len(self.queue) - 1:
-                    self.queue[idx], self.queue[idx+1] = self.queue[idx+1], self.queue[idx]
-            return True
         return c_lib.manager_move_down(self.manager, song_id)
     
-    def update_priority(self, song_id: int, priority: float) -> bool:
-        """Update song priority"""
-        if self.use_fallback:
-            return True # No-op for simple fallback
-        return c_lib.manager_update_priority(self.manager, song_id, priority)
+    def rotate(self, forward: bool = True) -> bool:
+        """Rotate the circular queue"""
+        return c_lib.manager_rotate_queue(self.manager, forward)
     
+    def update_priority(self, song_id: int, likes: int, play_count: int) -> bool:
+        """Update song priority in C heap"""
+        return c_lib.manager_update_priority(self.manager, song_id, likes, play_count)
+    
+    def search_songs(self, query: str) -> List[int]:
+        """Search songs using C Trie"""
+        node_ptr = c_lib.manager_search_songs(self.manager, query.encode('utf-8'))
+        results = []
+        current = node_ptr
+        while current:
+            results.append(current.contents.song_id)
+            current = current.contents.next
+        return list(set(results)) # Deduplicate if any duplicates in trie nodes
+
+    def search_artists(self, query: str) -> List[int]:
+        """Search artists using C Trie"""
+        node_ptr = c_lib.manager_search_artists(self.manager, query.encode('utf-8'))
+        results = []
+        current = node_ptr
+        while current:
+            results.append(current.contents.song_id)
+            current = current.contents.next
+        return list(set(results))
+
+    def get_recommendations(self, limit: int = 10) -> List[int]:
+        """Get recommended song IDs from the heap"""
+        node_ptr = c_lib.manager_get_recommendations(self.manager, limit)
+        results = []
+        current = node_ptr
+        while current:
+            results.append(current.contents.song_id)
+            current = current.contents.next
+        return results
+
     def undo(self) -> bool:
         """Undo last operation"""
-        if self.use_fallback: return False
         return c_lib.manager_undo(self.manager)
     
     def redo(self) -> bool:
         """Redo last undone operation"""
-        if self.use_fallback: return False
         return c_lib.manager_redo(self.manager)
     
     def get_current_song(self) -> int:
         """Get currently playing song ID"""
-        if self.use_fallback:
-            if 0 <= self.current_index < len(self.queue):
-                return self.queue[self.current_index]
-            return -1
         return c_lib.manager_get_current_song(self.manager)
     
     def get_queue(self) -> List[int]:
         """Get all songs in queue as a list"""
-        if self.use_fallback:
-            return list(self.queue)
-        
         songs = []
         if self.manager and self.manager.contents.queue:
-            current_node = self.manager.contents.queue.contents.head
-            while current_node:
+            head = self.manager.contents.queue.contents.head
+            size = self.manager.contents.queue.contents.size
+            current_node = head
+            for _ in range(size):
+                if not current_node: break
                 songs.append(current_node.contents.song_id)
                 current_node = current_node.contents.next
         return songs
     
     def get_queue_size(self) -> int:
         """Get queue size"""
-        if self.use_fallback:
-            return len(self.queue)
         if self.manager and self.manager.contents.queue:
             return self.manager.contents.queue.contents.size
         return 0
     
     def __del__(self):
         """Cleanup when object is destroyed"""
-        if not self.use_fallback and hasattr(self, 'manager') and self.manager and c_lib:
+        if hasattr(self, 'manager') and self.manager and c_lib:
             c_lib.manager_destroy(self.manager)
 
 # ============================================================================

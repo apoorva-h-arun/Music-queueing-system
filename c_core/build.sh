@@ -20,7 +20,7 @@ mkdir -p build
 # Set compiler and flags
 CC=gcc
 CFLAGS="-Wall -Wextra -O2 -fPIC"
-SOURCES="doubly_linked_list.c max_heap.c stack.c queue.c hashmap.c manager.c"
+SOURCES="doubly_linked_list.c max_heap.c stack.c queue.c trie.c manager.c"
 
 # Platform-specific compilation
 if [ "$OS_TYPE" = "Linux" ]; then

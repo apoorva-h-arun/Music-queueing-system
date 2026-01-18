@@ -229,6 +229,34 @@ def get_user_history(user_id: int, limit: int = 50) -> List[PlayHistory]:
     finally:
         session.close()
 
+def update_song_likes(song_id: int, likes: float) -> bool:
+    """Update song likes/popularity score"""
+    session = get_session()
+    try:
+        song = session.query(Song).filter(Song.id == song_id).first()
+        if song:
+            song.popularity = likes
+            session.commit()
+            return True
+        return False
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+def get_play_count(song_id: int) -> int:
+    """Get total play count for a song"""
+    session = get_session()
+    try:
+        from sqlalchemy import func
+        count = session.query(func.count(PlayHistory.id))\
+            .filter(PlayHistory.song_id == song_id)\
+            .scalar()
+        return count or 0
+    finally:
+        session.close()
+
 def get_popular_songs(limit: int = 10) -> List[Song]:
     """Get most popular songs based on play count"""
     session = get_session()
