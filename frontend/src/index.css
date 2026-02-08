@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --color-prime-50: #f0f9ff;
+  --color-prime-100: #e0f2fe;
+  --color-prime-200: #bae6fd;
+  --color-prime-300: #7dd3fc;
+  --color-prime-400: #38bdf8;
+  --color-prime-50: #0ea5e9;
+  --color-prime-600: #0284c7;
+  --color-prime-700: #0369a1;
+  --color-prime-800: #075985;
+  --color-prime-900: #0c4a6e;
+}
+
+@layer base {
+  :root {
+    --bg-main: #1a120b;
+    --bg-card: #2d1e16;
+    --bg-sidebar: #241711;
+    --accent: #d6ae7b;
+    --accent-hover: #e5c39a;
+    --text-primary: #ffffff;
+    --text-secondary: #d6ae7b;
+    --text-muted: #8b735b;
+    --glass: rgba(255, 255, 255, 0.05);
+  }
+
+  body {
+    @apply bg-[var(--bg-main)] text-[var(--text-primary)] antialiased min-h-screen overflow-x-hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-[var(--bg-card)] rounded-2xl border border-white/5 shadow-2xl;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 text-[var(--text-secondary)] hover:bg-[var(--glass)] hover:text-white;
+  }
+
+  .btn-play {
+    @apply w-12 h-12 flex items-center justify-center bg-[var(--accent)] text-[var(--bg-main)] rounded-full hover:scale-105 transition-transform;
+  }
+
+  .song-card {
+    @apply relative bg-[var(--bg-card)] p-4 rounded-xl border border-white/5 hover:border-[var(--accent)] transition-all;
+  }
+
+  /* Custom Range Input */
+  input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    @apply shadow-2xl;
+  }
+
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-card);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
