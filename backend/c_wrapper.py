@@ -200,15 +200,6 @@ if c_lib:
     c_lib.manager_get_recommendations.argtypes = [POINTER(MusicQueueManager), c_int]
     c_lib.manager_get_recommendations.restype = POINTER(SongIdNode)
 
-    c_lib.manager_print_cdll.argtypes = [POINTER(MusicQueueManager)]
-    c_lib.manager_print_cdll.restype = None
-
-    c_lib.manager_print_heap.argtypes = [POINTER(MusicQueueManager)]
-    c_lib.manager_print_heap.restype = None
-
-    c_lib.manager_print_trie.argtypes = [POINTER(MusicQueueManager)]
-    c_lib.manager_print_trie.restype = None
-
 # ============================================================================
 # PYTHON WRAPPER CLASS
 # ============================================================================
@@ -321,11 +312,6 @@ class MusicQueueWrapper:
             return self.manager.contents.queue.contents.size
         return 0
     
-    def display(self):
-        c_lib.manager_print_cdll(self.manager)
-        c_lib.manager_print_heap(self.manager)
-        c_lib.manager_print_trie(self.manager)
-
     def __del__(self):
         """Cleanup when object is destroyed"""
         if hasattr(self, 'manager') and self.manager and c_lib:

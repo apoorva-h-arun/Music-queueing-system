@@ -189,11 +189,11 @@ bool manager_rotate_queue(MusicQueueManager *mgr, bool forward) {
 /**
  * Update priority of a song (triggered on like/play)
  */
-
 bool manager_update_priority(MusicQueueManager *mgr, int song_id, int likes,
                              int play_count) {
   if (!mgr)
     return false;
+
   float priority = (float)(likes * 2 + play_count);
   bool result = heap_update_priority(mgr->recommendations, song_id, priority);
 
@@ -329,29 +329,6 @@ void manager_display_recommendations(MusicQueueManager *mgr) {
   if (!mgr)
     return;
   heap_display(mgr->recommendations);
-}
-
-void manager_print_cdll(MusicQueueManager *mgr) {
-  if (!mgr)
-    return;
-  //printf("Manager");
-  dll_print(mgr->queue);
-}
-
-void manager_print_heap(MusicQueueManager *mgr) {
-  if (!mgr)
-    return;
-  //printf("Manager");
-  maxheap_print(mgr->recommendations);
-}
-
-void manager_print_trie(MusicQueueManager *mgr) {
-  if (!mgr)
-    return;
-  printf("\nArtist trie: ");
-  trie_print(mgr->artist_trie, NULL, 0);
-  printf("\nSong trie: ");
-  trie_print(mgr->song_trie, NULL, 0);
 }
 
 /**

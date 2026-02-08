@@ -135,7 +135,7 @@ const SongCard: React.FC<SongCardProps> = ({ song, onPlay, onAdd, onLike }) => {
                     <h3 className="font-bold truncate text-white text-lg">{song.title}</h3>
                     <p className="text-sm text-[var(--text-muted)] truncate">{song.artist}</p>
                     <div className="mt-2 text-xs flex items-center gap-1 text-[var(--accent)] font-mono">
-                        <span>LIKES:</span>
+                        <span>PRIORITY:</span>
                         <span>{song.popularity}</span>
                     </div>
                 </div>

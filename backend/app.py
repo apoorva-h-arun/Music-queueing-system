@@ -16,8 +16,6 @@ import requests
 import re
 from dotenv import load_dotenv
 
-queue_manager = None
-
 # Load environment variables
 load_dotenv()
 
@@ -36,6 +34,7 @@ except Exception as e:
     print(f"⚠ Could not auto-sync local songs: {e}")
 
 # Initialize Queue Manager (with Python fallback)
+queue_manager = None
 try:
     print("Initializing Music Queue Manager...")
     # This will use the Python fallback internally if C lib is missing

@@ -74,7 +74,6 @@ DLLNode *dll_find_by_id(DoublyLinkedList *list, int song_id);
 void dll_display(DoublyLinkedList *list);
 void dll_destroy(DoublyLinkedList *list);
 int dll_get_size(DoublyLinkedList *list);
-void dll_print(DoublyLinkedList *list);
 
 // ============================================================================
 // MAX HEAP (Priority Queue for Recommendations)
@@ -103,7 +102,6 @@ void heap_display(MaxHeap *heap);
 void heap_destroy(MaxHeap *heap);
 int heap_get_size(MaxHeap *heap);
 bool heap_is_empty(MaxHeap *heap);
-void maxheap_print(MaxHeap *heap);
 
 // ============================================================================
 // TRIE (Song and Artist Search)
@@ -126,7 +124,6 @@ void trie_insert(TrieNode *root, const char *key, int song_id);
 SongIdNode *trie_search_prefix(TrieNode *root, const char *prefix);
 void trie_display_results(TrieNode *root, const char *prefix);
 void trie_destroy(TrieNode *root);
-void trie_print(TrieNode *trie, char *word, int k);
 
 // ============================================================================
 // STACK (Undo/Redo System)
