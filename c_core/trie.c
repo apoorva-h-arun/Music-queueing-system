@@ -1,16 +1,6 @@
-/**
- * Trie Implementation
- *
- * Provides prefix-based search for songs and artists
- * Case-insensitive support
- */
-
 #include "music_queue_core.h"
 #include <ctype.h>
 
-/**
- * Create a new Trie node
- */
 TrieNode *trie_create_node() {
   TrieNode *node = (TrieNode *)malloc(sizeof(TrieNode));
   if (!node)
@@ -25,15 +15,30 @@ TrieNode *trie_create_node() {
   return node;
 }
 
-/**
- * Initialize a new Trie
- */
+
+void trie_print(TrieNode *trie, char *word, int k) {
+  if (word == NULL) {
+    word = (char*)malloc(50);
+  }
+  if (!trie)
+    return;
+  for (int i = 0; i < 26; ++i) {
+    if (trie->children[i]) {
+      word[k] = i + 'a';
+      trie_print(trie->children[i], word, k + 1);
+    }
+    else if (trie->isEnd) {
+      word[k] = '\0';
+      printf(" %s", word);
+      return;
+    }
+  }
+}
+
+
 TrieNode *trie_create() { return trie_create_node(); }
 
-/**
- * Insert a key into the Trie
- * Maps to lowercase and only allows a-z
- */
+
 void trie_insert(TrieNode *root, const char *key, int song_id) {
   if (!root || !key)
     return;
@@ -62,10 +67,6 @@ void trie_insert(TrieNode *root, const char *key, int song_id) {
   }
 }
 
-/**
- * Search for a prefix in the Trie
- * Returns the SongIdNode list of the prefix node
- */
 SongIdNode *trie_search_prefix(TrieNode *root, const char *prefix) {
   if (!root || !prefix)
     return NULL;
@@ -86,17 +87,12 @@ SongIdNode *trie_search_prefix(TrieNode *root, const char *prefix) {
   return current->song_ids;
 }
 
-/**
- * Collect all song IDs from a node and its children (Helper)
- */
 static void collect_ids(TrieNode *node, SongIdNode **results) {
   if (!node)
     return;
 
-  // Add IDs from this node
   SongIdNode *current_id = node->song_ids;
   while (current_id) {
-    // Create a copy to avoid pointer issues with Trie destruction
     SongIdNode *copy = (SongIdNode *)malloc(sizeof(SongIdNode));
     if (copy) {
       copy->song_id = current_id->song_id;
@@ -106,7 +102,6 @@ static void collect_ids(TrieNode *node, SongIdNode **results) {
     current_id = current_id->next;
   }
 
-  // Recurse for children
   for (int i = 0; i < 26; i++) {
     if (node->children[i]) {
       collect_ids(node->children[i], results);
@@ -114,19 +109,11 @@ static void collect_ids(TrieNode *node, SongIdNode **results) {
   }
 }
 
-/**
- * Display results (simplified for current requirements - returns all matching
- * IDs under prefix)
- */
+
 void trie_display_results(TrieNode *root, const char *prefix) {
-  // In a real implementation, this might print to stdout.
-  // For our API, search_prefix is more useful.
   printf("Trie search results for: %s\n", prefix);
 }
 
-/**
- * Destroy the Trie and free memory
- */
 void trie_destroy(TrieNode *root) {
   if (!root)
     return;
@@ -137,7 +124,6 @@ void trie_destroy(TrieNode *root) {
     }
   }
 
-  // Free song ID list
   SongIdNode *current = root->song_ids;
   while (current) {
     SongIdNode *next = current->next;

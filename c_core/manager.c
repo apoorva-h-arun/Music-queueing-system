@@ -331,6 +331,29 @@ void manager_display_recommendations(MusicQueueManager *mgr) {
   heap_display(mgr->recommendations);
 }
 
+void manager_print_cdll(MusicQueueManager *mgr) {
+  if (!mgr)
+    return;
+  //printf("Manager");
+  dll_print(mgr->queue);
+}
+
+void manager_print_heap(MusicQueueManager *mgr) {
+  if (!mgr)
+    return;
+  //printf("Manager");
+  maxheap_print(mgr->recommendations);
+}
+
+void manager_print_trie(MusicQueueManager *mgr) {
+  if (!mgr)
+    return;
+  printf("\nArtist trie: ");
+  trie_print(mgr->artist_trie, NULL, 0);
+  printf("\nSong trie: ");
+  trie_print(mgr->song_trie, NULL, 0);
+}
+
 /**
  * Destroy manager
  */
